@@ -1,4 +1,4 @@
-name: Test Pipeline
+name: Fullstack App Deployment
 
 on:
   push:
@@ -12,35 +12,62 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v3
         with:
-          fetch-depth: 1  # Speed up checkout
+          fetch-depth: 0  # Ensure full repo is cloned
+
+      - name: Debug Working Directory
+        run: pwd
 
       - name: Debug Repository Structure
-        run: ls -R
+        run: ls -R ~/Fullstack/ecommerce-store-master
+
+      - name: Verify Backend Directory
+        run: |
+          if [ -d "~/Fullstack/ecommerce-store-master/backend" ]; then
+            echo "✅ Backend directory found!"
+          else
+            echo "❌ ERROR: Backend directory is missing!"
+            exit 1
+          fi
+
+      - name: Verify Frontend Directory
+        run: |
+          if [ -d "~/Fullstack/ecommerce-store-master/frontend" ]; then
+            echo "✅ Frontend directory found!"
+          else
+            echo "❌ ERROR: Frontend directory is missing!"
+            exit 1
+          fi
 
       - name: Build Backend Docker Image
         run: |
-          docker build --cache-from=backend-image:latest -f backend/Dockerfile -t backend-image:latest ./backend
+          docker build -f ~/Fullstack/ecommerce-store-master/backend/Dockerfile -t backend-image:latest ~/Fullstack/ecommerce-store-master/backend
 
       - name: Build Frontend Docker Image
         run: |
-          docker build --cache-from=frontend-image:latest -f frontend/Dockerfile -t frontend-image:latest ./frontend
+          docker build -f ~/Fullstack/ecommerce-store-master/frontend/Dockerfile -t frontend-image:latest ~/Fullstack/ecommerce-store-master/frontend
 
   master_docker_deploy:
     runs-on: self-hosted
     needs: master_docker_build
     steps:
-      - name: Clean Up Old Containers
+      - name: Stop and Remove Existing Backend Container (if any)
         run: |
-          docker stop backend-container frontend-container || true
-          docker rm backend-container frontend-container || true
-          docker network prune -f
-          docker system prune -af
+          docker stop backend-container || true
+          docker rm backend-container || true
+
+      - name: Stop and Remove Existing Frontend Container (if any)
+        run: |
+          docker stop frontend-container || true
+          docker rm frontend-container || true
 
       - name: Create Docker Network (if not exists)
-        run: docker network create app-network || true
+        run: |
+          docker network create app-network || true
 
       - name: Run Backend Container
-        run: docker run -d --name backend-container -p 5000:5000 --network app-network backend-image:latest
+        run: |
+          docker run -d --name backend-container -p 5000:5000 --network app-network backend-image:latest
 
       - name: Run Frontend Container
-        run: docker run -d --name frontend-container -p 3000:3000 --network app-network frontend-image:latest
+        run: |
+          docker run -d --name frontend-container -p 3000:3000 --network app-network frontend-image:latest
