@@ -1,4 +1,4 @@
-name: Fullstack App Deployment
+name: Test Pipeline
 
 on:
   push:
@@ -11,40 +11,18 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
-        with:
-          fetch-depth: 0  # Ensure full repo is cloned
-
-      - name: Debug Working Directory
-        run: pwd
 
       - name: Debug Repository Structure
-        run: ls -R ~/Fullstack/ecommerce-store-master
-
-      - name: Verify Backend Directory
         run: |
-          if [ -d "~/Fullstack/ecommerce-store-master/backend" ]; then
-            echo "✅ Backend directory found!"
-          else
-            echo "❌ ERROR: Backend directory is missing!"
-            exit 1
-          fi
-
-      - name: Verify Frontend Directory
-        run: |
-          if [ -d "~/Fullstack/ecommerce-store-master/frontend" ]; then
-            echo "✅ Frontend directory found!"
-          else
-            echo "❌ ERROR: Frontend directory is missing!"
-            exit 1
-          fi
+          ls -R
 
       - name: Build Backend Docker Image
         run: |
-          docker build -f ~/Fullstack/ecommerce-store-master/backend/Dockerfile -t backend-image:latest ~/Fullstack/ecommerce-store-master/backend
+          docker build -f backend/Dockerfile -t backend-image:latest ./backend
 
       - name: Build Frontend Docker Image
         run: |
-          docker build -f ~/Fullstack/ecommerce-store-master/frontend/Dockerfile -t frontend-image:latest ~/Fullstack/ecommerce-store-master/frontend
+          docker build -f frontend/Dockerfile -t frontend-image:latest ./frontend
 
   master_docker_deploy:
     runs-on: self-hosted
