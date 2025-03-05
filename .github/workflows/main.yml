@@ -15,12 +15,20 @@ jobs:
       - name: Debug Repository Structure
         run: |
           ls -R
+
+      - name: Debug Backend Directory
+        run: |
+          echo "Checking backend directory..."
+          ls -l ./backend
+
       - name: Build Backend Docker Image
         run: |
           docker build -f backend/Dockerfile -t backend-image:latest ./backend
+
       - name: Build Frontend Docker Image
         run: |
           docker build -f frontend/Dockerfile -t frontend-image:latest ./frontend
+
   master_docker_deploy:
     runs-on: self-hosted
     needs: master_docker_build
@@ -29,16 +37,20 @@ jobs:
         run: |
           docker stop backend-container || true
           docker rm backend-container || true
+
       - name: Stop and Remove Existing Frontend Container (if any)
         run: |
           docker stop frontend-container || true
           docker rm frontend-container || true
+
       - name: Create Docker Network (if not exists)
         run: |
           docker network create app-network || true
+
       - name: Run Backend Container
         run: |
           docker run -d --name backend-container -p 5000:5000 --network app-network backend-image:latest
+
       - name: Run Frontend Container
         run: |
           docker run -d --name frontend-container -p 3000:3000 --network app-network frontend-image:latest
