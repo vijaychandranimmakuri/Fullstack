@@ -11,22 +11,46 @@ jobs:
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v3
+        with:
+          fetch-depth: 0  # Ensures the entire repository is checked out
 
       - name: Debug Repository Structure
         run: |
+          echo "Current directory:"
+          pwd
+          echo "Listing all files in the repository:"
           ls -R
 
       - name: Debug Backend Directory
         run: |
           echo "Checking backend directory..."
-          ls -l ./backend
+          if [ -d "./backend" ]; then
+            echo "Backend directory exists!"
+            ls -l ./backend
+          else
+            echo "Error: Backend directory does NOT exist!"
+            exit 1
+          fi
 
       - name: Build Backend Docker Image
         run: |
+          echo "Building Backend Docker Image..."
           docker build -f backend/Dockerfile -t backend-image:latest ./backend
+
+      - name: Debug Frontend Directory
+        run: |
+          echo "Checking frontend directory..."
+          if [ -d "./frontend" ]; then
+            echo "Frontend directory exists!"
+            ls -l ./frontend
+          else
+            echo "Error: Frontend directory does NOT exist!"
+            exit 1
+          fi
 
       - name: Build Frontend Docker Image
         run: |
+          echo "Building Frontend Docker Image..."
           docker build -f frontend/Dockerfile -t frontend-image:latest ./frontend
 
   master_docker_deploy:
@@ -35,22 +59,27 @@ jobs:
     steps:
       - name: Stop and Remove Existing Backend Container (if any)
         run: |
+          echo "Stopping existing backend container (if running)..."
           docker stop backend-container || true
           docker rm backend-container || true
 
       - name: Stop and Remove Existing Frontend Container (if any)
         run: |
+          echo "Stopping existing frontend container (if running)..."
           docker stop frontend-container || true
           docker rm frontend-container || true
 
       - name: Create Docker Network (if not exists)
         run: |
+          echo "Creating Docker network..."
           docker network create app-network || true
 
       - name: Run Backend Container
         run: |
+          echo "Running Backend Container..."
           docker run -d --name backend-container -p 5000:5000 --network app-network backend-image:latest
 
       - name: Run Frontend Container
         run: |
+          echo "Running Frontend Container..."
           docker run -d --name frontend-container -p 3000:3000 --network app-network frontend-image:latest
