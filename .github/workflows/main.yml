@@ -17,7 +17,7 @@ jobs:
           ls -R
       - name: Build Backend Docker Image
         run: |
-          docker build -f backend/Dockerfile -t backend-image:latest .
+          docker build -f backend/Dockerfile -t backend-image:latest ./backend
       - name: Build Frontend Docker Image
         run: |
           docker build -f frontend/Dockerfile -t frontend-image:latest ./frontend
